@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: money_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d money_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: money_tracker
+      DB_USER: user
+      DB_PASSWORD: password
+    depends_on:
+      db:
+        condition: service_healthy
+    # volumes: 
+    #   - ./:/app
+    restart: on-failure
+
+volumes:
+  postgres_data:
