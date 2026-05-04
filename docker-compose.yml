@@ -1,5 +1,6 @@
 services:
   db:
+    container_name: devops-proj-db
     image: postgres:15
     environment:
       POSTGRES_USER: user
@@ -15,12 +16,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - default
+
   app:
+    container_name: devops-proj-app
     build: .
     ports:
       - "8000:8000"
     environment:
-      DB_HOST: db
+      DB_HOST: devops-proj-db
       DB_PORT: 5432
       DB_NAME: money_tracker
       DB_USER: user
@@ -28,9 +33,63 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # volumes: 
-    #   - ./:/app
     restart: on-failure
+    networks:
+      - default
+
+  prometheus:
+    container_name: devops-proj-prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - default
+
+  grafana:
+    container_name: devops-proj-grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - default
+
+  loki:
+    container_name: devops-proj-loki
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - default
+
+  promtail:
+    container_name: devops-proj-promtail
+    image: grafana/promtail:latest
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - default
 
 volumes:
   postgres_data:
+  grafana_data:   
+  prometheus_data: 
+  loki_data:
+
+networks:
+  default:
+    name: devops-proj-network
