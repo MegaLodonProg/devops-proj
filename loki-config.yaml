@@ -5,18 +5,15 @@ server:
 
 common:
   path_prefix: /loki
-  storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
-  replication_factor: 1
   ring:
+    instance_addr: 0.0.0.0
     kvstore:
       store: inmemory
+  replication_factor: 1
 
 schema_config:
   configs:
-    - from: 2020-10-24
+    - from: 2020-01-01
       store: tsdb
       object_store: filesystem
       schema: v13
@@ -24,5 +21,13 @@ schema_config:
         prefix: index_
         period: 24h
 
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-shipper-active
+    cache_location: /loki/tsdb-shipper-cache
+  filesystem:
+    directory: /loki
+
 limits_config:
   allow_structured_metadata: true
+  volume_enabled: true
