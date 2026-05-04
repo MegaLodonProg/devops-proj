@@ -4,6 +4,7 @@ import psycopg2
 import os
 from datetime import date
 from contextlib import asynccontextmanager
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Подключение к БД через переменные окружения
 def get_db():
@@ -37,6 +38,8 @@ async def lifespan(_app: FastAPI):
     yield
 
 app = FastAPI(title="Money Manager API", lifespan=lifespan)
+
+Instrumentator().instrument(app).expose(app)
 
 # Модель для запроса
 class Transaction(BaseModel):
