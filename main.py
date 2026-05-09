@@ -75,3 +75,17 @@ def get_stats():
 @app.get("/")
 def root():
     return {"message": "Money Manager API"}
+
+@app.get("/cards/recommend")
+def recommend_card(category: str, amount: float):
+    # Простая логика
+    cashback = {
+        "кофе": {"тинькофф": 5, "сбер": 2},
+        "продукты": {"сбер": 3, "тинькофф": 2},
+        "бензин": {"газпром": 5, "тинькофф": 1},
+    }
+    rates = cashback.get(category, {})
+    if not rates:
+        return {"error": "Категория не найдена", "available": list(cashback.keys())}
+    best = max(rates, key=rates.get)
+    return {"category": category, "amount": amount, "recommended_card": best, "cashback": rates[best]}
